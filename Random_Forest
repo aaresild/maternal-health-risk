@@ -1,0 +1,150 @@
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+
+data = pd.read_csv("Maternal_Health_Risk_Dataset.csv")
+
+data.head()
+
+# Correlation
+corr = data[['Age', 'SystolicBP', 'DiastolicBP', 'BS', 'BodyTemp', 'HeartRate']].corr()
+sns.heatmap(corr, annot=True, cmap='coolwarm')
+plt.title('Korrelatsioonikaart')
+plt.show()
+
+# DecisionTree
+from sklearn.tree import DecisionTreeClassifier, plot_tree
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import train_test_split
+
+X = data.drop('RiskLevel', axis=1)
+y = data['RiskLevel']
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1)
+
+clf = DecisionTreeClassifier()  
+clf.fit(X_train, y_train)
+
+y_pred = clf.predict(X_test)
+
+accuracy = accuracy_score(y_test, y_pred)
+print(f"Accuracy: {accuracy}")
+
+plt.figure(figsize=(100, 50))
+plot_tree(clf, feature_names=X.columns, class_names=clf.classes_, filled=True)
+plt.show()
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
+
+#data = data.drop_duplicates()
+
+condition1 = (data["BS"] > 15) & (data["RiskLevel"] != 'high risk')
+condition2 = data["HeartRate"] < 50
+
+data = data[~(condition1 |condition2 )] 
+
+
+X = data.drop('RiskLevel', axis=1)
+y = data['RiskLevel']
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1)
+
+train_indices = X_train.index
+test_indices = X_test.index
+
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+
+rf_model = RandomForestClassifier(n_estimators=1000, random_state=1)
+rf_model.fit(X_train, y_train)
+rf_predictions = rf_model.predict(X_test)
+
+print(f"Accuracy of Random Forest: {accuracy_score(y_test, rf_predictions)}")
+
+# Feature importances using Random Forest
+feature_importances = rf_model.feature_importances_
+feature_names = data.columns[:-1] 
+
+sorted_idx = feature_importances.argsort()
+
+plt.figure(figsize=(10,7))
+plt.barh(range(X_train.shape[1]), feature_importances[sorted_idx], align='center')
+plt.yticks(range(X_train.shape[1]), feature_names[sorted_idx])
+plt.xlabel('Importance')
+plt.title('Feature importances using Random Forest')
+plt.show()
+
+incorrect_indices = test_indices[y_test != rf_predictions]
+incorrect_predictions = data.loc[incorrect_indices]
+
+print(incorrect_indices)
+print(incorrect_predictions)
+
+plt.figure(figsize=(12, 6))
+
+sns.histplot(data['Age'], label='All Data', kde=False)
+sns.histplot(incorrect_predictions['Age'], label='Incorrect Predictions', kde=False)
+
+plt.title('Distribution of Age')
+plt.legend()
+plt.show()
+
+sns.histplot(data['SystolicBP'], label='All Data', kde=False)
+sns.histplot(incorrect_predictions['SystolicBP'], label='Incorrect Predictions', kde=False)
+
+plt.title('Distribution of SystolicBP')
+plt.legend()
+plt.show()
+
+
+sns.histplot(data['DiastolicBP'], label='All Data', kde=False)
+sns.histplot(incorrect_predictions['DiastolicBP'], label='Incorrect Predictions', kde=False)
+
+plt.title('Distribution of DiastolicBP')
+plt.legend()
+plt.show()
+
+
+sns.histplot(data['BS'], label='All Data', kde=False)
+sns.histplot(incorrect_predictions['BS'], label='Incorrect Predictions', kde=False)
+
+plt.title('Distribution of BS')
+plt.legend()
+plt.show()
+
+# confussion_matrix
+from sklearn.metrics import confusion_matrix
+import numpy as np
+
+cm = confusion_matrix(y_test, rf_predictions)
+
+
+unique_classes = np.unique(y_test)
+num_classes = len(unique_classes)
+print(num_classes)
+
+
+def extract_values_from_cm(cm, class_index):
+    TP = cm[class_index, class_index]
+    FP = sum(cm[:, class_index]) - TP
+    FN = sum(cm[class_index, :]) - TP
+    TN = sum(sum(cm)) - TP - FP - FN
+    return TN, FP, FN, TP
+
+
+TN_0, FP_0, FN_0, TP_0 = extract_values_from_cm(cm, 0)
+print("For class 0: TN:", TN_0, "FP:", FP_0, "FN:", FN_0, "TP:", TP_0)
+
+TN_1, FP_1, FN_1, TP_1 = extract_values_from_cm(cm, 1)
+print("For class 1: TN:", TN_1, "FP:", FP_1, "FN:", FN_1, "TP:", TP_1)
+
+TN_2, FP_2, FN_2, TP_2 = extract_values_from_cm(cm, 2)
+print("For class 2: TN:", TN_2, "FP:", FP_2, "FN:", FN_2, "TP:", TP_2)
