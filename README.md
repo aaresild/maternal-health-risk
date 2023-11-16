@@ -6,3 +6,5 @@ Projekti raport leiab failist:
 **PAT23_report_Bangladeshi naiste tervisenäitajate mõju rasedusaegsele riskihinnangule.pdf**
 
 Algandmed ja andmete töötluse dokumendid on kaustas **Arvutused**
+
+Algandmed on *csv* formaadis, koodifailid *Jupyter Notebooki* formaadis. Seega on võimalik faile lugeda otse GitHubis või laadides alla ja käivitades need Jupyter Notebookiga.
